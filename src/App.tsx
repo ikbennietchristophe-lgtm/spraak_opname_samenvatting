@@ -28,6 +28,8 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [needsAuth, setNeedsAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [showTroubleshoot, setShowTroubleshoot] = useState(false);
   
   // Recording & Transcription
   const speech = useSpeechToText();
@@ -82,6 +84,7 @@ export default function App() {
 
   const handleLogin = async () => {
     setIsLoggingIn(true);
+    setLoginError(null);
     try {
       const result = await googleSignIn();
       if (result) {
@@ -92,8 +95,9 @@ export default function App() {
           loadHistory();
         }, 1000);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Inloggen mislukt:", err);
+      setLoginError(err?.message || "Onbekende fout bij inloggen met Google.");
     } finally {
       setIsLoggingIn(false);
     }
@@ -251,7 +255,7 @@ export default function App() {
                     Log in met je Google-account om spraakopnamen te starten. De tekst en een AI-samenvatting worden direct in een Google Sheet op jouw Google Drive gezet.
                   </p>
 
-                  <div className="space-y-4">
+                  <div className="space-y-4 text-left">
                     <button
                       onClick={handleLogin}
                       disabled={isLoggingIn}
@@ -268,10 +272,62 @@ export default function App() {
                           <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
                         </svg>
                       )}
-                      <span className="text-sm">Inloggen met Google</span>
+                      <span className="text-sm font-semibold">Inloggen met Google</span>
                     </button>
 
-                    <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 mt-6">
+                    {loginError && (
+                      <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-800 text-xs font-medium space-y-1">
+                        <div className="flex items-center gap-1.5 font-bold">
+                          <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
+                          <span>Inloggen mislukt</span>
+                        </div>
+                        <p className="leading-normal">{loginError}</p>
+                      </div>
+                    )}
+
+                    <div className="pt-2">
+                      <button
+                        onClick={() => setShowTroubleshoot(!showTroubleshoot)}
+                        className="w-full text-center text-xs text-indigo-600 hover:text-indigo-800 hover:underline font-semibold flex items-center justify-center gap-1 cursor-pointer py-1"
+                      >
+                        {showTroubleshoot ? "Verberg inlog hulp" : "Inlogproblemen? Klik hier voor de oplossing"}
+                      </button>
+                      
+                      {showTroubleshoot && (
+                        <div className="mt-3 bg-indigo-50/50 rounded-xl p-4 border border-indigo-100/50 text-xs text-slate-700 space-y-3 leading-relaxed">
+                          <div>
+                            <span className="font-bold text-indigo-900 block mb-1">1. Werk je in de AI Studio Preview?</span>
+                            <p>
+                              Browsers blokkeren pop-up vensters of cookies in een iframe. Klik op de knop om de app in een **nieuw tabblad** te openen en log daar in:
+                            </p>
+                            <a
+                              href={window.location.origin}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 mt-1.5 font-bold text-indigo-600 hover:text-indigo-800 hover:underline bg-white px-2.5 py-1 rounded-md border border-indigo-100 shadow-xs"
+                            >
+                              Open in nieuw tabblad
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+
+                          <div className="border-t border-indigo-100/60 pt-2">
+                            <span className="font-bold text-indigo-900 block mb-1">2. Domein toevoegen aan Firebase Console</span>
+                            <p className="mb-1">
+                              Voor de gepubliceerde cloud-versie moet je deze URL toevoegen als toegestaan domein:
+                            </p>
+                            <code className="block bg-indigo-100/50 p-1.5 rounded font-mono text-[10px] break-all select-all text-slate-800">
+                              {window.location.hostname}
+                            </code>
+                            <p className="mt-1.5">
+                              Ga naar de <a href="https://console.firebase.google.com/project/folkloric-glass-kgtt6/authentication/providers" target="_blank" rel="noreferrer" className="text-indigo-600 font-bold hover:underline">Firebase Console</a> → <strong>Settings</strong> → <strong>Authorized Domains</strong> en voeg dit domein toe.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 mt-4 pt-2 border-t border-slate-100">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                       Beveiligde OAuth koppeling via Google
                     </div>
