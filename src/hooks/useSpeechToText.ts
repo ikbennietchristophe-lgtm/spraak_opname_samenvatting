@@ -46,13 +46,17 @@ export function useSpeechToText() {
     };
 
     recognition.onend = () => {
-      // If the engine stopped but we are supposed to be recording, restart it
+      // If the engine stopped but we are supposed to be recording, restart it safely after a tiny delay
       if (statusRef.current === "recording" && recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-        } catch (e) {
-          console.error("Failed to restart speech recognition:", e);
-        }
+        setTimeout(() => {
+          if (statusRef.current === "recording" && recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch (e) {
+              console.error("Failed to restart speech recognition:", e);
+            }
+          }
+        }, 150);
       }
     };
 
@@ -104,6 +108,7 @@ export function useSpeechToText() {
       setTranscript("");
     }
 
+    statusRef.current = "recording";
     setStatus("recording");
     setError(null);
 
@@ -116,6 +121,7 @@ export function useSpeechToText() {
 
   const pauseRecording = () => {
     if (status !== "recording") return;
+    statusRef.current = "paused";
     setStatus("paused");
     try {
       // Disabling onend auto-restart first
@@ -124,6 +130,7 @@ export function useSpeechToText() {
   };
 
   const stopRecording = () => {
+    statusRef.current = "idle";
     setStatus("idle");
     try {
       recognitionRef.current.stop();

@@ -139,11 +139,28 @@ export default function App() {
       });
 
       if (!sumResponse.ok) {
-        const errorData = await sumResponse.json();
-        throw new Error(errorData.error || "Fout bij genereren samenvatting door de server.");
+        let errMsg = "Fout bij genereren samenvatting door de server.";
+        try {
+          const errorText = await sumResponse.text();
+          try {
+            const errorData = JSON.parse(errorText);
+            errMsg = errorData.error || errMsg;
+          } catch {
+            errMsg = errorText || errMsg;
+          }
+        } catch {}
+        throw new Error(errMsg);
       }
 
-      const sumData = await sumResponse.json();
+      const sumDataText = await sumResponse.text();
+      let sumData: any = {};
+      try {
+        sumData = JSON.parse(sumDataText);
+      } catch (parseErr) {
+        console.error("Fout bij het parsen van server response:", sumDataText);
+        throw new Error("De server gaf een ongeldig antwoord terug: " + sumDataText);
+      }
+
       const generatedSummary = sumData.summary;
       const generatedTitle = sumData.title || "Spraakopname Samenvatting";
       setSummary(generatedSummary);

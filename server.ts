@@ -71,10 +71,34 @@ async function startServer() {
         }
       });
 
-      const responseText = response.text || "{}";
-      const parsed = JSON.parse(responseText.trim());
-      const summary = parsed.summary || "Geen samenvatting gegenereerd.";
-      const title = parsed.title || "Spraakopname Samenvatting";
+      let responseText = response.text || "{}";
+      responseText = responseText.trim();
+
+      // Strip any markdown wrappers like ```json ... ``` or ``` ... ```
+      if (responseText.startsWith("```")) {
+        responseText = responseText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+      }
+      responseText = responseText.trim();
+
+      let summary = "Geen samenvatting gegenereerd.";
+      let title = "Spraakopname Samenvatting";
+
+      try {
+        const parsed = JSON.parse(responseText);
+        summary = parsed.summary || summary;
+        title = parsed.title || title;
+      } catch (parseErr) {
+        console.warn("Kon de JSON-response niet direct parsen, proberen op te vangen:", responseText);
+        // Fallback search
+        const summaryMatch = responseText.match(/"summary"\s*:\s*"([^"]+)"/);
+        const titleMatch = responseText.match(/"title"\s*:\s*"([^"]+)"/);
+        if (summaryMatch) summary = summaryMatch[1];
+        if (titleMatch) title = titleMatch[1];
+        
+        if (!summaryMatch && !titleMatch) {
+          summary = responseText;
+        }
+      }
 
       return res.json({ summary, title });
     } catch (error: any) {
