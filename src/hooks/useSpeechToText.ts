@@ -9,6 +9,12 @@ export function useSpeechToText() {
 
   const recognitionRef = useRef<any>(null);
   const accumulatedTranscriptRef = useRef<string>("");
+  const statusRef = useRef<RecordingStatus>("idle");
+
+  // Keep statusRef synced with state to avoid stale closures in events
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -41,7 +47,7 @@ export function useSpeechToText() {
 
     recognition.onend = () => {
       // If the engine stopped but we are supposed to be recording, restart it
-      if (status === "recording" && recognitionRef.current) {
+      if (statusRef.current === "recording" && recognitionRef.current) {
         try {
           recognitionRef.current.start();
         } catch (e) {
@@ -86,7 +92,7 @@ export function useSpeechToText() {
         } catch (e) {}
       }
     };
-  }, [status]);
+  }, []);
 
   const startRecording = () => {
     if (!isSupported) return;

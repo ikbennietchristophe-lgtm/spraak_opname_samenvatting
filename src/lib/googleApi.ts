@@ -7,9 +7,10 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 const provider = new GoogleAuthProvider();
-// Request Google Drive and Sheets scopes
+// Request Google Drive, Sheets, and Gmail send scopes
 provider.addScope('https://www.googleapis.com/auth/drive.file');
 provider.addScope('https://www.googleapis.com/auth/spreadsheets');
+provider.addScope('https://www.googleapis.com/auth/gmail.send');
 
 let isSigningIn = false;
 let cachedAccessToken: string | null = null;
@@ -226,3 +227,49 @@ export async function fetchRecordingHistory(): Promise<RecordingRow[]> {
     return [];
   }
 }
+
+// Helper to encode a string UTF-8 safe and RFC 4648 Base64URL safe
+function base64Safe(str: string): string {
+  const utf8Bytes = new TextEncoder().encode(str);
+  let binary = "";
+  for (let i = 0; i < utf8Bytes.length; i++) {
+    binary += String.fromCharCode(utf8Bytes[i]);
+  }
+  const base64 = window.btoa(binary);
+  return base64
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+/**
+ * Send an email using Google Gmail API REST endpoint on behalf of the user.
+ */
+export async function sendSummaryEmail(subject: string, bodyText: string, recipient: string = "ikbennietchristophe@gmail.com") {
+  try {
+    const emailLines = [
+      `From: me`,
+      `To: ${recipient}`,
+      `Subject: =?utf-8?B?${base64Safe(subject)}?=`,
+      `MIME-Version: 1.0`,
+      `Content-Type: text/plain; charset=utf-8`,
+      `Content-Transfer-Encoding: 7bit`,
+      ``,
+      bodyText
+    ];
+    const emailStr = emailLines.join('\r\n');
+    const base64EncodedEmail = base64Safe(emailStr);
+
+    await googleFetch('https://gmail.googleapis.com/v1/users/me/messages/send', {
+      method: 'POST',
+      body: JSON.stringify({
+        raw: base64EncodedEmail
+      })
+    });
+    console.log("Email succesvol verzonden!");
+  } catch (error) {
+    console.error("Fout bij verzenden email via Gmail API:", error);
+    throw error;
+  }
+}
+

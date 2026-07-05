@@ -19,7 +19,7 @@ import {
   FileText, 
   Folder 
 } from "lucide-react";
-import { initAuth, googleSignIn, logout, saveRecordingToGoogleSheets, fetchRecordingHistory } from "./lib/googleApi";
+import { initAuth, googleSignIn, logout, saveRecordingToGoogleSheets, fetchRecordingHistory, sendSummaryEmail } from "./lib/googleApi";
 import { useSpeechToText } from "./hooks/useSpeechToText";
 import { Recording, RecordingStatus } from "./types";
 import { User } from "firebase/auth";
@@ -145,12 +145,21 @@ export default function App() {
 
       const sumData = await sumResponse.json();
       const generatedSummary = sumData.summary;
+      const generatedTitle = sumData.title || "Spraakopname Samenvatting";
       setSummary(generatedSummary);
 
       // Step 2: Save to Google Sheets
       setProcessStep("Gegevens opslaan in Google Sheets...");
       const saveResult = await saveRecordingToGoogleSheets(activeText, generatedSummary);
       setSavedSheetUrl(saveResult.spreadsheetUrl);
+
+      // Step 2.5: Mail samenvatting doorsturen
+      setProcessStep("Samenvatting per e-mail verzenden...");
+      try {
+        await sendSummaryEmail(generatedTitle, generatedSummary);
+      } catch (emailErr) {
+        console.error("Fout bij verzenden email via Gmail API:", emailErr);
+      }
 
       // Step 3: Refresh log history
       setProcessStep("Geschiedenis bijwerken...");

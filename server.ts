@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 const isProd = process.env.NODE_ENV === "production";
 const PORT = 3000;
@@ -47,15 +47,36 @@ async function startServer() {
             role: "user",
             parts: [
               {
-                text: `Maak een beknopte, heldere samenvatting in het Nederlands van de volgende ingesproken tekst. Zorg voor een professionele en gestructureerde toon:\n\n"${text}"`
+                text: `Maak een beknopte, heldere samenvatting in het Nederlands van de volgende ingesproken tekst. Geef ook een heel korte, beschrijvende titel (maximaal 6 woorden) die deze samenvatting perfect beschrijft:\n\n"${text}"`
               }
             ]
           }
-        ]
+        ],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              summary: {
+                type: Type.STRING,
+                description: "De professionele en gestructureerde samenvatting van de tekst in het Nederlands."
+              },
+              title: {
+                type: Type.STRING,
+                description: "Een zeer beknopte, krachtige titel (maximaal 6 woorden) van de samenvatting."
+              }
+            },
+            required: ["summary", "title"]
+          }
+        }
       });
 
-      const summary = response.text || "Geen samenvatting gegenereerd.";
-      return res.json({ summary });
+      const responseText = response.text || "{}";
+      const parsed = JSON.parse(responseText.trim());
+      const summary = parsed.summary || "Geen samenvatting gegenereerd.";
+      const title = parsed.title || "Spraakopname Samenvatting";
+
+      return res.json({ summary, title });
     } catch (error: any) {
       console.error("Fout bij samenvatten:", error);
       return res.status(500).json({
