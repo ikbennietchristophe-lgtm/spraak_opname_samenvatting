@@ -1,0 +1,6 @@
+{
+  "name": "Spraakopname en Samenvatting",
+  "description": "Een webapplicatie waarmee je spraakopnamen kunt maken met realtime transcriptie, deze opslaat in Google Sheets op Google Drive, en automatisch een samenvatting door Gemini laat toevoegen.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
