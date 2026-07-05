@@ -1,9 +1,9 @@
 {
-  "projectId": "folkloric-glass-kgtt6",
-  "appId": "1:147379408250:web:559b69bfc9b489e8731ac3",
-  "apiKey": "AIzaSyCvfoZ7nZFQrj8mpE96EjKiwtcAMJeV50k",
-  "authDomain": "folkloric-glass-kgtt6.firebaseapp.com",
-  "storageBucket": "folkloric-glass-kgtt6.firebasestorage.app",
-  "messagingSenderId": "147379408250",
-  "measurementId": ""
+  "projectId": "cn-summarizer",
+  "appId": "1:622255090295:web:2ae17c996a90839b087472",
+  "apiKey": "AIzaSyCa3BqM0GerFdMsh32C-z6UZ2rAOld-Ig0",
+  "authDomain": "cn-summarizer.firebaseapp.com",
+  "storageBucket": "n-summarizer.firebasestorage.app",
+  "messagingSenderId": "622255090295",
+  "measurementId": "G-WFGERNDJTL"
 }
